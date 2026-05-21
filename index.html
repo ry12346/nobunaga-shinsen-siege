@@ -22,7 +22,7 @@
   <input id="arrival" placeholder="例: 13:45:30" />
 
   <label>行軍時間（mm:ss）</label>
-  <input id="march" placeholder="例: 25:00" />
+  <input id="march" placeholder="例: 2500（=25:00）/ 905（=09:05）" />
 
   <button id="calc">計算</button>
 
@@ -48,25 +48,60 @@ startClock();
 
     function pad2(n){ return String(n).padStart(2, "0"); }
 
-    function parseHMS(s){
-      const m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(s.trim());
-      if(!m) return null;
-      const hh = Number(m[1]), mm = Number(m[2]), ss = Number(m[3]);
-      if(mm > 59 || ss > 59) return null;
-      return { hh, mm, ss };
-    }
+    function parseArrival(input){
+  const s = input.trim();
 
-    function parseMS(s){
-      const m = /^(\d{1,3}):(\d{2})$/.exec(s.trim());
-      if(!m) return null;
-      const mm = Number(m[1]), ss = Number(m[2]);
-      if(ss > 59) return null;
-      return { mm, ss };
-    }
+  // 13:45:30 形式
+  let m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(s);
+  if (m) {
+    const hh = Number(m[1]), mm = Number(m[2]), ss = Number(m[3]);
+    if (mm <= 59 && ss <= 59) return { hh, mm, ss };
+    return null;
+  }
 
+  // 134530 形式（6桁）
+  m = /^(\d{2})(\d{2})(\d{2})$/.exec(s);
+  if (m) {
+    const hh = Number(m[1]), mm = Number(m[2]), ss = Number(m[3]);
+    if (hh <= 23 && mm <= 59 && ss <= 59) return { hh, mm, ss };
+    return null;
+  }
+
+  return null;
+}
+
+function parseMarch(input){
+  const s = input.trim();
+
+  // 25:00 形式
+  let m = /^(\d{1,3}):(\d{2})$/.exec(s);
+  if (m) {
+    const mm = Number(m[1]), ss = Number(m[2]);
+    if (ss <= 59) return { mm, ss };
+    return null;
+  }
+
+  // 2500 形式（4桁 → mm:ss）
+  m = /^(\d{2})(\d{2})$/.exec(s);
+  if (m) {
+    const mm = Number(m[1]), ss = Number(m[2]);
+    if (ss <= 59) return { mm, ss };
+    return null;
+  }
+
+  // 905 形式（3桁 → m:ss ＝ 09:05）
+  m = /^(\d)(\d{2})$/.exec(s);
+  if (m) {
+    const mm = Number(m[1]), ss = Number(m[2]);
+    if (ss <= 59) return { mm, ss };
+    return null;
+  }
+
+  return null;
+}
     document.getElementById("calc").addEventListener("click", () => {
-      const arrival = parseHMS(document.getElementById("arrival").value);
-      const march = parseMS(document.getElementById("march").value);
+      const arrival = parseArrival(document.getElementById("arrival").value);
+const march = parseMarch(document.getElementById("march").value);
       const out = document.getElementById("out");
 
       if(!arrival || !march){
